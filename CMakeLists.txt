@@ -1,6 +1,6 @@
 # Project configuration
 cmake_minimum_required(VERSION 3.5...3.19)
-project(BaseTobase)
+project(BaseToBase)
 
 # Lib paths
 set(IMGUI_PATH ${PROJECT_SOURCE_DIR}/libs/imgui)
@@ -23,19 +23,19 @@ add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC ${IMGUI_PATH} ${GLFW_PATH}/include)
 
 # Build the project
-add_executable(BaseTobase src/main.cpp)
+add_executable(BaseToBase src/main.cpp)
 
 # Link with GLFW and ImGui
-target_link_libraries(BaseTobase glfw imgui)
+target_link_libraries(BaseToBase glfw imgui)
 include_directories(${PROJECT_SOURCE_DIR})
 
 # Link with OpenGL
 find_package(OpenGL REQUIRED)
-target_link_libraries(BaseTobase OpenGL::GL)
+target_link_libraries(BaseToBase OpenGL::GL)
 
 if (UNIX)
 	# Enable all warnings and treat them as errors
-	target_compile_options(BaseTobase PRIVATE -Wall -Wextra -Wpedantic -Werror)
+	target_compile_options(BaseToBase PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 if (MSVC)
