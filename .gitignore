@@ -1,2 +1,6 @@
+# CMake output
 .cache
 build
+
+# ImGui window positions
+imgui.ini
