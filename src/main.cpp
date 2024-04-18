@@ -5,11 +5,19 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include <stdio.h>
+#include <memory>
+#include <list>
 
 #include "logging.hpp"
 #include "globals.cpp"
 
+#include "mappings/binary.cpp"
+#include "mapping.hpp"
+
 int main(void) {
+	std::list<std::unique_ptr<Mapping>> mappings;
+	mappings.emplace_back(std::make_unique<Binary>());
+
 	GLFWwindow* window;
 
 	/* Initialize the library */
@@ -59,11 +67,12 @@ int main(void) {
 
 	ImGui::SetNextWindowSize(ImVec2(128, 128));
 
-	bool showDemo = true;
-	bool init = true;
-
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window) && !globals::shouldExit) {
+		for (auto& mapping : mappings) {
+			mapping->Update();
+		}
+
 		glfwPollEvents();
 
 		/* Start the ImGui frame */
@@ -71,9 +80,8 @@ int main(void) {
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		if (init) {
-			ImGui::SetNextWindowSize(ImVec2(256, 128));
-			init = false;
+		for (auto& mapping : mappings) {
+			mapping->Render();
 		}
 
 		ImGui::Render();
