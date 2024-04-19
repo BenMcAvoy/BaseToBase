@@ -4,19 +4,29 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
+#include <unordered_map>
 #include <stdio.h>
 #include <memory>
-#include <list>
 
 #include "logging.hpp"
 #include "globals.cpp"
+#include "theme.hpp"
 
+#include "mappings/hexadecimal.cpp"
 #include "mappings/binary.cpp"
 #include "mapping.hpp"
 
+#include "font.hpp"
+
+void AddMapping(std::unordered_map<std::string, std::unique_ptr<Mapping>>& mappings, Mapping* mapping) {
+	mappings.emplace(mapping->name(), std::unique_ptr<Mapping>(mapping));
+}
+
 int main(void) {
-	std::list<std::unique_ptr<Mapping>> mappings;
-	mappings.emplace_back(std::make_unique<Binary>());
+	std::unordered_map<std::string, std::unique_ptr<Mapping>> mappings;
+
+	AddMapping(mappings, new Binary());
+	AddMapping(mappings, new Hexadecimal());
 
 	GLFWwindow* window;
 
@@ -54,7 +64,11 @@ int main(void) {
 	ImGui::CreateContext();
 	INFO("ImGui context created\n");
 
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO();
+	ImFontConfig config;
+	config.FontDataOwnedByAtlas = false;
+	io.Fonts->AddFontFromMemoryTTF(fonts::JetBrainsMonoNerdFont_Regular_ttf, sizeof(fonts::JetBrainsMonoNerdFont_Regular_ttf), 20.0f, &config, io.Fonts->GetGlyphRangesDefault());
+	SetupImGuiStyle();
 
 	/* Setup Dear ImGui style */
 	ImGui::StyleColorsDark();
@@ -65,24 +79,39 @@ int main(void) {
 
 	INFO("ImGui initialized\n");
 
-	ImGui::SetNextWindowSize(ImVec2(128, 128));
+	Mapping *selectedMapping = nullptr;
 
 	/* Loop until the user closes the window */
 	while (!glfwWindowShouldClose(window) && !globals::shouldExit) {
-		for (auto& mapping : mappings) {
-			mapping->Update();
-		}
-
 		glfwPollEvents();
+
+		ImGui::SetNextWindowPos(ImVec2(0, 0));
+		ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y));
 
 		/* Start the ImGui frame */
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		for (auto& mapping : mappings) {
-			mapping->Render();
+		ImGui::Begin("BaseToBase", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+		if (ImGui::BeginCombo("Select Item", selectedMapping ? selectedMapping->name() : "Select a mapping")) {
+			for (const auto& pair : mappings) {
+				if (ImGui::Selectable(pair.first.c_str())) {
+					selectedMapping = pair.second.get();
+				}
+			}
+
+			ImGui::EndCombo();
 		}
+
+		ImGui::InputText("Input: ", globals::input, IM_ARRAYSIZE(globals::input));
+		ImGui::Text("Output: %d", globals::output);
+
+		if (selectedMapping)
+			selectedMapping->Update();
+
+		ImGui::End();
 
 		ImGui::Render();
 
